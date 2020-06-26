@@ -23,8 +23,8 @@ class Feed extends Component {
   };
 
   componentDidMount() {
-    fetch('http://localhost:8080/auth/status',{
-      method:'GET',
+    fetch('http://localhost:8080/auth/status', {
+      method: 'GET',
       headers: {
         Authorization: "Bearer " + this.props.token
       }
@@ -56,9 +56,10 @@ class Feed extends Component {
       page--;
       this.setState({ postPage: page });
     }
-    fetch('http://localhost:8080/feed/posts?page=' + page,{
+    fetch('http://localhost:8080/feed/posts?page=' + page, {
       headers: {
-        Authorization: "Bearer " + this.props.token
+        Authorization: "Bearer " + this.props.token,
+        'Content-Type': 'application/json'
       }
     })
       .then(res => {
@@ -69,8 +70,8 @@ class Feed extends Component {
       })
       .then(resData => {
         this.setState({
-          posts: resData.posts.map(post=>{
-            return {...post, imagePath: post.imageUrl}
+          posts: resData.posts.map(post => {
+            return { ...post, imagePath: post.imageUrl }
           }),
           totalPosts: resData.totalItems,
           postsLoading: false
@@ -81,13 +82,13 @@ class Feed extends Component {
 
   statusUpdateHandler = event => {
     event.preventDefault();
-    fetch('http://localhost:8080/auth/status',{
-      method:'PATCH',
+    fetch('http://localhost:8080/auth/status', {
+      method: 'PATCH',
       headers: {
         Authorization: "Bearer " + this.props.token,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({status: this.state.status})
+      body: JSON.stringify({ status: this.state.status })
     })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
@@ -126,32 +127,48 @@ class Feed extends Component {
     });
     // Set up data (with image!)
     const formData = new FormData();
-    formData.append('title',postData.title);
-    formData.append('content',postData.content);
-    formData.append('image',postData.image);
-    let url = 'http://localhost:8080/feed/post';
-    let method = 'POST';
-    if (this.state.editPost) {
-      url = 'http://localhost:8080/feed/post/'+ this.state.editPost._id;
-      method = 'PUT';
+    formData.append('title', postData.title);
+    formData.append('content', postData.content);
+    formData.append('image', postData.image);
+    let url = 'http://localhost:8080/graphql';
+
+    let graphqlQuery = {
+      query: `{
+        mutation{ 
+          createPost(postInput:{title:"${postData.title}", content:"${postData.content}", imageUrl:"some url"}){
+            _id
+            title
+            content
+            imageUrl
+            creator {
+              name
+            }
+            createdAt
+          }
+        }
+      }`
     }
 
-    fetch(url,{
-      method: method,
-      body: formData,
+    fetch(url, {
+      method:'POST',
+      body: JSON.stringify(graphqlQuery),
       headers: {
-        Authorization: "Bearer " + this.props.token
+        Authorization: "Bearer " + this.props.token,
+        'Content-Type': 'application/json'
       }
     })
       .then(res => {
-        if (res.status !== 200 && res.status !== 201) {
-          throw new Error('Creating or editing a post failed!');
-        }
         return res.json();
       })
       .then(resData => {
+        if(resData.errors && resData.errors[0].status === 422){
+          throw new Error('Validation error');
+        }
+        if(resData.errors){
+          throw new Error('User creation failed');
+        }
         this.setState(prevState => {
-          return {          
+          return {
             isEditing: false,
             editPost: null,
             editLoading: false
@@ -175,10 +192,11 @@ class Feed extends Component {
 
   deletePostHandler = postId => {
     this.setState({ postsLoading: true });
-    fetch('http://localhost:8080/feed/post/'+postId,{
-      method:'DELETE',
+    fetch('http://localhost:8080/feed/post/' + postId, {
+      method: 'DELETE',
       headers: {
-        Authorization: "Bearer " + this.props.token
+        Authorization: "Bearer " + this.props.token,
+        'Content-Type': 'application/json'
       }
     })
       .then(res => {
