@@ -186,17 +186,37 @@ class Feed extends Component {
             }
           }
         `
-      }
-
-      return fetch('http://localhost:8080/graphql', {
-        method: 'POST',
-        body: JSON.stringify(graphqlQuery),
-        headers: {
-          Authorization: "Bearer " + this.props.token,
-          'Content-Type': 'application/json'
         }
-      });
-    })
+
+        if (this.state.editPost) {
+          graphqlQuery = {
+            query: `
+          mutation {
+            updatePost(id:"${this.state.editPost._id}",postInput: {title: "${postData.title}", content: "${
+              postData.content}", imageUrl: "${imageUrl}"}) {
+              _id
+              title
+              content
+              imageUrl
+              creator {
+                name
+              }
+              createdAt
+            }
+          }
+        `
+          }
+        }
+
+        return fetch('http://localhost:8080/graphql', {
+          method: 'POST',
+          body: JSON.stringify(graphqlQuery),
+          headers: {
+            Authorization: "Bearer " + this.props.token,
+            'Content-Type': 'application/json'
+          }
+        });
+      })
       .then(res => {
         return res.json();
       })
@@ -209,13 +229,17 @@ class Feed extends Component {
           throw new Error('Post creation failed');
         }
         console.log(resData);
+        let resDataField = 'createPost';
+        if(this.state.editPost){
+          resDataField = 'updatePost';
+        }
         const post = {
-          _id: resData.data.createPost._id,
-          title: resData.data.createPost.title,
-          content: resData.data.createPost.content,
-          creator: resData.data.createPost.creator,
-          createdAt: resData.data.createPost.createdAt,
-          imagePath: resData.data.createPost.imageUrl
+          _id: resData.data[resDataField]._id,
+          title: resData.data[resDataField].title,
+          content: resData.data[resDataField].content,
+          creator: resData.data[resDataField].creator,
+          createdAt: resData.data[resDataField].createdAt,
+          imagePath: resData.data[resDataField].imageUrl
         };
         this.setState(prevState => {
           let updatedPosts = [...prevState.posts];
@@ -225,7 +249,9 @@ class Feed extends Component {
             );
             updatedPosts[postIndex] = post;
           } else {
-            updatedPosts.pop();
+            if (prevState.posts.length >= 3) {
+              updatedPosts.pop();
+            }
             updatedPosts.unshift(post);
           }
           return {
