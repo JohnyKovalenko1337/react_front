@@ -33,7 +33,7 @@ class Feed extends Component {
         }
       `
     }
-    fetch('http://localhost:8080/graphql', {
+    fetch('https://rest-api-proj.herokuapp.com/graphql', {
       method: 'POST',
       headers: {
         Authorization: "Bearer " + this.props.token,
@@ -95,7 +95,7 @@ class Feed extends Component {
       }
     }
 
-    fetch('http://localhost:8080/graphql', {
+    fetch('https://rest-api-proj.herokuapp.com/graphql', {
       method: "POST",
       headers: {
         Authorization: "Bearer " + this.props.token,
@@ -134,7 +134,7 @@ class Feed extends Component {
         `
     }; 
     event.preventDefault();
-    fetch('http://localhost:8080/graphql', {
+    fetch('https://rest-api-proj.herokuapp.com/graphql', {
       method: 'POST',
       headers: {
         Authorization: "Bearer " + this.props.token,
@@ -184,7 +184,7 @@ class Feed extends Component {
     if (this.state.editPost) {
       formData.append('oldPath', this.state.editPost.imagePath);
     }
-    fetch('http://localhost:8080/post-image', {
+    fetch('https://rest-api-proj.herokuapp.com/post-image', {
       method: 'PUT',
       headers: {
         Authorization: "Bearer " + this.props.token
@@ -235,7 +235,7 @@ class Feed extends Component {
           }
         }
 
-        return fetch('http://localhost:8080/graphql', {
+        return fetch('https://rest-api-proj.herokuapp.com/graphql', {
           method: 'POST',
           body: JSON.stringify(graphqlQuery),
           headers: {
@@ -317,7 +317,7 @@ class Feed extends Component {
       `
     }
     this.setState({ postsLoading: true });
-    fetch('http://localhost:8080/graphql', {
+    fetch('https://rest-api-proj.herokuapp.com/graphql', {
       method: 'POST',
       headers: {
         Authorization: "Bearer " + this.props.token,
